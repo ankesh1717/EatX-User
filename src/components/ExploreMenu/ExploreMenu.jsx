@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { categories } from '../../assets/assets'
-import './ExploreMenu.css';
+import './Exploremenu.css';
 
 
 const ExploreMenu = ({category, setCategory}) => {
