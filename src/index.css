@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Kalam:wght@300;400;700&family=Outfit:wght@100..900&family=Poppins:wght@400;700&display=swap');
+
+
+body{
+  font-family: 'poppins', sans-serif !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cursor{
+  cursor: pointer;
+}
