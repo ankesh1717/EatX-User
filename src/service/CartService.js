@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/cart";
+const API_URL = "https://eatx-api-1.onrender.com/api/cart";
 
 const getAuthHeader = (token) => ({
   headers: {
