@@ -6,16 +6,14 @@ import Footer from "../../components/Footer/Footer";
 import axios from "axios";
 import { RAZORPAY_KEY } from "../../util/contants";
 import { useNavigate } from "react-router-dom";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PlaceOrder = () => {
   const { foodList, quantities, setQuantities, token } =
     useContext(StoreContext);
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [data, setData] = useState({
     firstName: "",
@@ -54,12 +52,13 @@ const PlaceOrder = () => {
     };
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/orders/create",
+        "https://eatx-api-1.onrender.com/api/orders/create",
         orderData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (response.status === 201 && response.data.razorpayOrderId) {
         //Initiate the payment
         initiateRazorpayPayment(response.data);
@@ -71,37 +70,36 @@ const PlaceOrder = () => {
     }
   };
 
- const initiateRazorpayPayment = (order) => {
-  const options = {
-    key: RAZORPAY_KEY,
-    amount: order.amount * 100, // Multiply by 100 for paise
-    currency: "INR",
-    name: "Food Land",
-    description: "Food Order Payment",
-    order_id: order.razorpayOrderId,
-    handler: async function (razorpayResponse) {
-      await verifyPayment(razorpayResponse);
-    },
-    prefill: {
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      contact: data.phoneNumber,
-    },
-    theme: {
-      color: "#3399cc",
-    },
-    modal: {
-      ondismiss: async function () {
-        toast.error("Payment cancelled.");
-        await deleteOrder(order.id);
+  const initiateRazorpayPayment = (order) => {
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: order.amount * 100, // Multiply by 100 for paise
+      currency: "INR",
+      name: "Food Land",
+      description: "Food Order Payment",
+      order_id: order.razorpayOrderId,
+      handler: async function (razorpayResponse) {
+        await verifyPayment(razorpayResponse);
       },
-    },
+      prefill: {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        contact: data.phoneNumber,
+      },
+      theme: {
+        color: "#3399cc",
+      },
+      modal: {
+        ondismiss: async function () {
+          toast.error("Payment cancelled.");
+          await deleteOrder(order.id);
+        },
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
   };
-
-  const razorpay = new window.Razorpay(options);
-  razorpay.open();
-};
-
 
   const verifyPayment = async (razorpayResponse) => {
     const paymentData = {
@@ -109,43 +107,54 @@ const PlaceOrder = () => {
       razorpay_order_id: razorpayResponse.razorpay_order_id,
       razorpay_signature: razorpayResponse.razorpay_signature,
     };
-    
-    try{
-      const response = await axios.post("http://localhost:8080/api/orders/verify", paymentData, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if(response.status === 200){
-      toast.success('Payment is successful.');
-      await clearCart();
-      navigate('/myorders')
-    }else{
-      toast.error('Payment failed. Please try again');
-      navigate('/');
+
+    try {
+      const response = await axios.post(
+        "https://eatx-api-1.onrender.com/api/orders/verify",
+        paymentData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success("Payment is successful.");
+        await clearCart();
+        navigate("/myorders");
+      } else {
+        toast.error("Payment failed. Please try again");
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("Payment failed. Please try again.");
     }
-  }catch(error){
-    toast.error('Payment failed. Please try again.');
-  }
   };
 
-  const deleteOrder = async (orderId) =>{
-    try{
-      await axios.delete('http://localhost:8080/api/orders/'+orderId, {headers:{'Authorization': `Bearer ${token}`}});
-
-    }catch(error){
-      toast.error('Something wents wrong. Contact Support.')
+  const deleteOrder = async (orderId) => {
+    try {
+      await axios.delete(
+        `https://eatx-api-1.onrender.com/api/orders/${orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    } catch (error) {
+      toast.error("Something wents wrong. Contact Support.");
     }
-  }
+  };
 
-  const clearCart = async () =>{
-    try{
-     await axios.delete('http://localhost:8080/api/cart', {headers:{'Authorization': `Bearer ${token}`}});
-     setQuantities({});
-    }catch(error){
+  const clearCart = async () => {
+    try {
+      await axios.delete("https://eatx-api-1.onrender.com/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setQuantities({});
+    } catch (error) {
       toast.error("Error while clearing the cart.");
     }
-  }
-  
-  
+  };
+
   const cartItems = foodList.filter((food) => quantities[food.id] > 0);
 
   const { subtotal, shipping, tax, total } = calculateCartTotal(
